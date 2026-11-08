@@ -1,0 +1,23 @@
+{
+  "name": "kurhiassist-phase0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "indexer": "node indexer.ts",
+    "identifier": "node identifier.ts",
+    "score": "node score.ts",
+    "test": "node test.ts",
+    "types": "tsc --noEmit --strict --target esnext --module nodenext --moduleResolution nodenext --allowImportingTsExtensions --skipLibCheck commun.ts vision.ts contour.ts ocr.ts texte.ts indexer.ts prix.ts reconnaissance.ts identifier.ts serveur.ts score.ts test.ts banc/evaluer.ts banc/generer.ts",
+    "serveur": "node serveur.ts"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.2",
+    "@techstark/opencv-js": "^4.12.0-release.1",
+    "onnxruntime-node": "^1.30.0",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^5.9.3"
+  }
+}

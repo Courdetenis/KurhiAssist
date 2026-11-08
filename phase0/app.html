@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f3f1">
+<title>Kurhinotama · Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Achromatic ledger: no colour in the chrome, ink everywhere, one hue (#1d5fbf) on the price.
+   Ground: shop stone #f4f3f1 instead of the kit grey. Phone first; two columns from 860px. */
+:root {
+  --ground: #f4f3f1; --surface: #ffffff; --raised: #ecebe8; --border: #e4e3e0; --rule: #efeeeb;
+  --text: #0a0a0a; --muted: #67655f; --accent: #141414; --prix: #1d5fbf;
+  --pill-warning-bg: #fffbeb; --pill-warning-ink: #92400e;
+  --pill-neutral-bg: #ecebe8; --pill-neutral-ink: #3d3d3d;
+  --pill-positive-bg: #dcfae5; --pill-positive-ink: #04250e;
+  --radius-card: 8px; --radius-control: 6px; --gap: 12px; --pad: 16px;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--ground); color: var(--text); font: 15px/1.5 "Geist", system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; }
+img { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+.barre { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 var(--pad); border-bottom: 1px solid var(--border); }
+.barre svg { flex: none; }
+.marque { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+.portee { color: var(--muted); font-size: 14px; }
+.etat { margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+main { max-width: 1080px; margin: 0 auto; padding: 20px var(--pad) 120px; }
+.titre h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+.titre p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+
+.panneau { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--pad); }
+.vide { margin-top: 20px; }
+.vide h2 { margin: 0 0 8px; font-size: 16px; font-weight: 500; }
+.vide ol { margin: 0; padding-left: 20px; color: var(--text); }
+.vide li { margin: 6px 0; }
+.vide .jeux { margin: 12px 0 0; color: var(--muted); font-size: 13px; }
+
+.resultat { display: grid; gap: var(--gap); margin-top: 20px; }
+
+/* The evidence: the photo beside the reference it was matched to. */
+.preuve { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+.preuve figure { margin: 0; }
+.preuve .cadre { aspect-ratio: 63 / 88; border-radius: var(--radius-control); background: var(--raised); overflow: hidden; }
+.preuve img { width: 100%; height: 100%; object-fit: cover; }
+.preuve figcaption { margin-top: 6px; font-size: 12px; color: var(--muted); }
+
+.identite h2 { margin: 0; font-size: 20px; font-weight: 500; line-height: 1.25; letter-spacing: -0.01em; }
+.identite .meta { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.pastilles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.pastille { flex: none; white-space: nowrap; display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 12px; font-size: 13px; font-weight: 500; background: var(--pill-neutral-bg); color: var(--pill-neutral-ink); }
+.pastille.ok { background: var(--pill-positive-bg); color: var(--pill-positive-ink); }
+.pastille.attention { background: var(--pill-warning-bg); color: var(--pill-warning-ink); }
+.alerte { margin: 12px 0 0; font-size: 14px; color: var(--pill-warning-ink); }
+
+.prix .etiquette { margin: 0; font-size: 13px; color: var(--muted); }
+.prix .montant { margin: 2px 0 0; font-size: 32px; font-weight: 700; line-height: 1.15; color: var(--prix); letter-spacing: -0.02em; }
+.prix .montant.absent { color: var(--muted); font-weight: 400; font-size: 24px; }
+.prix .second { margin: 2px 0 0; font-size: 14px; }
+.prix .second span { color: var(--muted); }
+.prix .note { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+.fiches { width: 100%; margin-top: 14px; border-collapse: collapse; font-size: 14px; }
+.fiches th { font-weight: 400; font-size: 12px; color: var(--muted); text-align: left; padding: 0 0 6px; }
+.fiches td { padding: 9px 0; border-top: 1px solid var(--rule); vertical-align: top; }
+.fiches .n { text-align: right; padding-left: 12px; white-space: nowrap; }
+.fiches th.n { text-align: right; }
+.fiches a { color: var(--text); text-decoration: none; }
+.fiches a:hover { text-decoration: underline; }
+.lien { display: inline-block; margin-top: 10px; font-size: 14px; color: var(--text); font-weight: 500; }
+
+.autres h3 { margin: 0 0 4px; font-size: 16px; font-weight: 500; }
+.autres p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.autres ul { list-style: none; margin: 0; padding: 0; }
+.autres button { width: 100%; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; min-height: 72px; padding: 8px 6px; margin: 0 -6px; border: 0; border-top: 1px solid var(--rule); background: none; text-align: left; cursor: pointer; border-radius: var(--radius-control); }
+.autres li:first-child button { border-top: 0; }
+.autres button:hover { background: var(--ground); }
+.autres button[aria-current="true"] { background: var(--raised); }
+.autres img { width: 40px; height: 56px; object-fit: cover; border-radius: 3px; background: var(--raised); }
+.autres .nom { display: block; font-size: 14px; font-weight: 500; }
+.autres .sous { display: block; font-size: 12px; color: var(--muted); }
+.autres .sim { font-size: 13px; color: var(--muted); text-align: right; }
+
+/* Loading: the final layout with grey bars at the size of what will land. */
+.barre-gris { display: block; background: var(--raised); border-radius: 4px; }
+.erreur p { margin: 0; font-size: 15px; }
+.erreur button { margin-top: 10px; }
+
+.actions { position: fixed; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 12px var(--pad) calc(12px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--border); }
+.primaire, .secondaire { height: 48px; padding: 0 20px; border-radius: 24px; border: 0; font-weight: 500; font-size: 16px; cursor: pointer; transition: transform .08s ease, background-color .15s ease; }
+.primaire { background: var(--accent); color: #fff; }
+.primaire:hover { background: #2a2a2a; }
+.secondaire { background: #e5e5e5; color: var(--text); }
+.secondaire:hover { background: #dadada; }
+.primaire:active, .secondaire:active { transform: scale(.98); }
+.primaire:disabled, .secondaire:disabled { opacity: .5; cursor: progress; }
+.texte { background: none; border: 0; padding: 0; font-weight: 500; text-decoration: underline; cursor: pointer; }
+
+.preuve .texte { grid-column: 1 / -1; justify-self: start; font-size: 14px; min-height: 32px; }
+
+/* Framing editor: the whole photo, the four card corners dragged by hand (nearest corner follows the finger). */
+.cadrage { position: fixed; inset: 0; z-index: 10; display: grid; grid-template-rows: auto 1fr auto; background: #0a0a0a; color: #fff; }
+.cadrage > p { margin: 0; padding: 14px var(--pad) 6px; font-size: 14px; }
+.cadrage .zone { display: grid; place-items: center; min-height: 0; padding: 8px var(--pad); }
+.cadrage .scene { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; }
+.cadrage img { max-width: 100%; max-height: calc(100dvh - 150px); pointer-events: none; }
+.cadrage svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.cadrage .boutons { display: grid; grid-template-columns: auto 1fr; gap: 8px; padding: 12px var(--pad) calc(12px + env(safe-area-inset-bottom)); }
+.cadrage .secondaire { background: #2a2a2a; color: #fff; }
+.cadrage .primaire { background: #fff; color: #0a0a0a; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+@media (min-width: 860px) {
+  .barre { padding-inline: max(32px, calc((100% - 1080px) / 2 + 32px)); } /* same left edge as the column */
+  main { padding: 32px 32px 48px; }
+  .actions { position: static; display: flex; padding: 0; margin-top: 16px; background: none; border: 0; }
+  .entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+  .entete .actions { margin-top: 0; }
+  .resultat { grid-template-columns: 360px 1fr; align-items: start; column-gap: 24px; }
+  .resultat > .preuve { grid-row: span 3; position: sticky; top: 20px; }
+}
+</style>
+</head>
+<body>
+<header class="barre">
+  <!-- Mark: two cards fanned, the shop's trade drawn in ink. -->
+  <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="2.5" y="4.5" width="10" height="14" rx="1.5" fill="none" stroke="#141414" stroke-width="1.5" transform="rotate(-12 7.5 11.5)"/><rect x="8.5" y="3" width="11" height="15.5" rx="1.5" fill="#141414"/></svg>
+  <span class="marque">Kurhinotama</span><span class="portee">Rachat</span>
+  <span class="etat" id="etat">Index en chargement</span>
+</header>
+
+<main>
+  <div class="entete">
+    <div class="titre">
+      <h1>Scanner une carte</h1>
+      <p>Carte à plat, prise de près, avec un peu de marge autour. Coupez le flash si la pièce est éclairée : son reflet cache l'illustration.</p>
+    </div>
+    <div class="actions">
+      <button class="primaire" id="btn-photo" type="button">Prendre une photo</button>
+      <button class="secondaire" id="btn-import" type="button">Importer</button>
+    </div>
+  </div>
+  <input type="file" accept="image/*" capture="environment" id="in-photo" hidden>
+  <input type="file" accept="image/*" id="in-import" hidden>
+
+  <section class="panneau vide" id="vide" aria-labelledby="vide-titre">
+    <h2 id="vide-titre">Comment ça marche</h2>
+    <ol>
+      <li>Photographiez une seule carte, face visible.</li>
+      <li>L'illustration est comparée à toutes les cartes de référence, puis la langue et le numéro sont lus sur la carte.</li>
+      <li>Vérifiez la carte proposée et ses prix Cardmarket ; touchez une autre carte si ce n'est pas la bonne.</li>
+    </ol>
+    <p class="jeux">Pokémon, Yu-Gi-Oh!, One Piece, Riftbound et Lorcana. Tout est calculé sur le PC de la boutique, sans service payant.</p>
+  </section>
+
+  <section class="resultat" id="resultat" aria-live="polite" hidden>
+    <div class="preuve">
+      <figure><div class="cadre"><img id="img-scan" alt="Votre photo, redressée"></div><figcaption>Votre photo</figcaption></figure>
+      <figure><div class="cadre"><img id="img-ref" alt=""></div><figcaption id="legende-ref">Carte de référence</figcaption></figure>
+      <button class="texte" id="btn-cadrage" type="button" hidden>Ajuster le cadrage</button>
+    </div>
+
+    <div class="panneau identite" id="identite"></div>
+    <div class="panneau prix" id="prix"></div>
+    <div class="panneau autres" id="autres"></div>
+  </section>
+
+  <div class="cadrage" id="cadrage" role="dialog" aria-modal="true" aria-label="Ajuster le cadrage" hidden>
+    <p>Faites glisser les 4 coins sur les coins de la carte.</p>
+    <div class="zone"><div class="scene" id="scene"><img id="img-cadrage" alt="Votre photo entière">
+      <svg id="svg-cadrage" aria-hidden="true"><polygon id="poly-cadrage" fill="rgba(255,255,255,.12)" stroke="#fff" stroke-width="2" vector-effect="non-scaling-stroke"/><g id="poignees"></g></svg>
+    </div></div>
+    <div class="boutons">
+      <button class="secondaire" id="btn-cadrage-annuler" type="button">Annuler</button>
+      <button class="primaire" id="btn-cadrage-ok" type="button">Relancer la recherche</button>
+    </div>
+  </div>
+
+  <section class="panneau erreur" id="erreur" hidden>
+    <p id="erreur-texte"></p>
+    <button class="texte" id="btn-reessayer" type="button">Réessayer</button>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const eur = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+const pct = (x) => `${Math.round(x * 100)} %`;
+const LANGUES = { fr: "Français", en: "Anglais", ja: "Japonais", de: "Allemand", it: "Italien", es: "Espagnol", pt: "Portugais", ko: "Coréen" };
+const JEUX = { pokemon: "Pokémon", yugioh: "Yu-Gi-Oh!", onepiece: "One Piece", riftbound: "Riftbound", lorcana: "Lorcana" };
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+// Same file naming as fichierRef() in commun.ts.
+const imageRef = (c) => `references/${c.jeu}/${encodeURIComponent(c.id.replace(/[^\w.-]/g, "_"))}.jpg`;
+
+let scan = null;      // last server answer
+let dernierFichier = null;
+let dernierEnvoi = null; // the shrunk photo actually sent: the corners are in its pixels
+
+fetch("/api/etat").then((r) => r.json()).then((e) => {
+  $("etat").textContent = `${e.cartes.toLocaleString("fr-FR")} cartes de référence`;
+}).catch(() => { $("etat").textContent = "Serveur injoignable"; });
+
+$("btn-photo").onclick = () => $("in-photo").click();
+$("btn-import").onclick = () => $("in-import").click();
+for (const id of ["in-photo", "in-import"]) {
+  $(id).onchange = (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) scanner(f); };
+}
+$("btn-reessayer").onclick = () => dernierFichier ? scanner(dernierFichier) : $("in-photo").click();
+
+// Phone photos are 3-8 MB: shrink to 2400 px before sending (also turns iPhone formats into JPEG).
+async function reduire(fichier) {
+  try {
+    const bmp = await createImageBitmap(fichier, { imageOrientation: "from-image" });
+    const k = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    return await new Promise((ok) => c.toBlob((b) => ok(b ?? fichier), "image/jpeg", 0.9));
+  } catch {
+    return fichier;
+  }
+}
+
+function occupe(oui) {
+  $("btn-photo").disabled = oui;
+  $("btn-import").disabled = oui;
+  $("btn-photo").textContent = oui ? "Analyse en cours…" : "Prendre une photo";
+}
+
+// coins: corners placed by hand on the photo already sent (same pixels), else a new photo.
+async function scanner(fichier, coins) {
+  if (!coins) { dernierFichier = fichier; dernierEnvoi = null; }
+  occupe(true);
+  $("vide").hidden = true;
+  $("erreur").hidden = true;
+  afficherChargement(URL.createObjectURL(fichier));
+  try {
+    dernierEnvoi ??= await reduire(fichier);
+    const url = coins ? `/api/scan?coins=${coins.flat().map(Math.round).join(",")}` : "/api/scan";
+    const reponse = await fetch(url, { method: "POST", headers: { "content-type": "image/jpeg" }, body: dernierEnvoi });
+    const corps = await reponse.json();
+    if (!reponse.ok) throw new Error(corps.erreur ?? `erreur ${reponse.status}`);
+    scan = corps;
+    if (scan.reconnue === false) afficherInconnue(); else afficher(0, scan.cardmarket, scan.note);
+  } catch (e) {
+    $("resultat").hidden = true;
+    $("erreur-texte").textContent = `La photo n'a pas pu être analysée (${e.message}). Vérifiez que le PC de la boutique est allumé et sur le même Wi-Fi.`;
+    $("erreur").hidden = false;
+  } finally {
+    occupe(false);
+  }
+}
+
+function afficherChargement(urlPhoto) {
+  $("resultat").hidden = false;
+  $("btn-cadrage").hidden = true;
+  $("img-scan").src = urlPhoto;
+  $("img-ref").removeAttribute("src");
+  $("legende-ref").textContent = "Recherche parmi les cartes de référence…";
+  $("identite").innerHTML = `<span class="barre-gris" style="height:25px;width:70%"></span><span class="barre-gris" style="height:18px;width:50%;margin-top:8px"></span><span class="barre-gris" style="height:24px;width:40%;margin-top:14px"></span>`;
+  $("prix").innerHTML = `<p class="etiquette">Tendance Cardmarket</p><span class="barre-gris" style="height:37px;width:120px;margin-top:4px"></span>`;
+  $("autres").innerHTML = `<h3>Autres cartes possibles</h3><span class="barre-gris" style="height:56px"></span>`;
+}
+
+// The index holds English names; when the card's printed name was read (and confirmed by its number), show that one.
+const nomAffiche = (c, i) => (i === 0 && c.numeroLu && scan.texte ? scan.texte : c.nom);
+
+function afficher(i, fiches, note) {
+  const c = scan.candidats[i];
+  const second = scan.candidats[i === 0 ? 1 : 0];
+  $("img-scan").src = scan.carte;
+  $("btn-cadrage").hidden = false;
+  $("img-ref").src = imageRef(c);
+  $("img-ref").alt = `${c.nom}, carte de référence`;
+  $("legende-ref").textContent = `Référence · ressemblance ${pct(c.sim)}`;
+
+  const langue = scan.langue ? `<span class="pastille">${LANGUES[scan.langue] ?? scan.langue}</span>` : `<span class="pastille attention">Langue non lue : à vérifier</span>`;
+  const numero = c.numeroLu ? `<span class="pastille ok">Nom et numéro lus sur la carte</span>` : "";
+  // Score = image similarity + text (name, number): a near tie means reprints or variants with the same art.
+  const proche = i === 0 && second && c.score - second.score < 0.03;
+  $("identite").innerHTML = `
+    <h2>${esc(nomAffiche(c, i))}</h2>
+    ${nomAffiche(c, i) !== c.nom ? `<p class="meta">Nom anglais : ${esc(c.nom)}</p>` : ""}
+    <p class="meta">${esc(JEUX[c.jeu])} · ${esc(c.set)}${c.jeu === "yugioh" ? "" : ` · ${esc(c.numero)}`}</p>
+    <div class="pastilles">${langue}${numero}</div>
+    ${c.sim < 0.85 && !c.numeroLu ? `<p class="alerte">Ressemblance faible : vérifiez la carte, ou reprenez la photo de plus près.</p>`
+      : proche ? `<p class="alerte">${esc(second.nom)} (${esc(second.set)}) est presque identique : vérifiez l'édition dans les autres cartes possibles.</p>` : ""}
+    ${scan.detecte ? "" : `<p class="alerte">Le bord de la carte n'a pas été trouvé : touchez « Ajuster le cadrage », ou reprenez la photo plus près.</p>`}`;
+
+  afficherPrix(c, fiches, note);
+  afficherAutres(i, "Touchez la bonne carte si la proposition est fausse.");
+}
+
+// Weak evidence: say so rather than show a confident wrong card; the closest cards stay one tap away.
+function afficherInconnue() {
+  $("img-scan").src = scan.carte;
+  $("btn-cadrage").hidden = false;
+  $("img-ref").removeAttribute("src");
+  $("legende-ref").textContent = "Aucune référence assez proche";
+  $("identite").innerHTML = `
+    <h2>Carte non reconnue</h2>
+    <p class="alerte">Aucune carte de référence ne correspond. Le jeu n'est peut-être pas pris en charge (${Object.values(JEUX).join(", ")}),
+      ou le cadrage est faux : touchez « Ajuster le cadrage », ou reprenez la photo plus près et sans flash.</p>`;
+  $("prix").innerHTML = `<p class="etiquette">Tendance Cardmarket</p><p class="montant absent">Pas de prix</p>`;
+  afficherAutres(-1, "Si la bonne carte est dans cette liste, touchez-la.");
+}
+
+function afficherAutres(i, consigne) {
+  $("autres").innerHTML = `<h3>Autres cartes possibles</h3><p>${consigne}</p><ul>${
+    scan.candidats.slice(0, 6).map((x, j) => `<li><button type="button" data-i="${j}" aria-current="${j === i}">
+      <img src="${imageRef(x)}" alt="" loading="lazy">
+      <span><span class="nom">${esc(x.nom)}</span><span class="sous">${esc(JEUX[x.jeu])} · ${esc(x.set)}${x.jeu === "yugioh" ? "" : ` · ${esc(x.numero)}`}</span></span>
+      <span class="sim">${pct(x.sim)}</span></button></li>`).join("")}</ul>`;
+  for (const b of $("autres").querySelectorAll("button")) b.onclick = () => choisir(Number(b.dataset.i));
+}
+
+function afficherPrix(c, fiches, note) {
+  // Yu-Gi-Oh! (one product per edition) and One Piece (one per version: normal, parallel...): the Cardmarket catalog
+  // does not say which product is which, so show the range, dearest first.
+  const parEdition = (c.jeu === "yugioh" || c.jeu === "onepiece" || c.jeu === "lorcana") && fiches.length > 1;
+  if (parEdition) fiches = [...fiches].sort((a, b) => (b.trend ?? -1) - (a.trend ?? -1));
+  const tendances = fiches.map((f) => f.trend).filter((t) => t != null);
+  const principale = fiches.find((f) => f.trend != null);
+  const lignes = fiches.slice(0, 6).map((f) => `<tr><td><a href="${esc(f.lien)}" target="_blank" rel="noopener">${esc(f.nom)}</a></td>
+    <td class="n">${f.trend != null ? eur.format(f.trend) : "—"}</td><td class="n">${f.avg30 != null ? eur.format(f.avg30) : "—"}</td></tr>`).join("");
+  const reste = fiches.length > 6 ? `<p class="note">${fiches.length - 6} autres fiches Cardmarket pour cette carte.</p>` : "";
+  const recherche = `https://www.cardmarket.com/fr/${{ pokemon: "Pokemon", yugioh: "YuGiOh", onepiece: "OnePiece", riftbound: "Riftbound", lorcana: "Lorcana" }[c.jeu]}/Products/Search?searchString=${encodeURIComponent(c.nom)}`;
+  $("prix").innerHTML = `
+    <p class="etiquette">Tendance Cardmarket</p>
+    ${parEdition && tendances.length
+      ? `<p class="montant">${eur.format(Math.min(...tendances))} – ${eur.format(Math.max(...tendances))}</p><p class="second"><span>${c.jeu === "yugioh"
+        ? `Selon l'édition, ${fiches.length} fiches. Vérifiez le code d'édition imprimé sous l'illustration.`
+        : `Selon la version (${c.jeu === "lorcana" ? "normale, Enchanted, promo" : "normale, parallèle, alternative"}), ${fiches.length} fiches.`}</span></p>`
+      : principale
+        ? `<p class="montant">${eur.format(principale.trend)}</p><p class="second"><span>Moyenne 30 jours</span> ${principale.avg30 != null ? eur.format(principale.avg30) : "—"}</p>`
+        : `<p class="montant absent">Pas de prix</p>`}
+    <p class="note">Prix indicatif du jour, toutes langues et tous états confondus.${note && !parEdition ? ` ${esc(note)}.` : ""}</p>
+    ${lignes ? `<table class="fiches"><thead><tr><th>Fiche Cardmarket</th><th class="n">Tendance</th><th class="n">30 jours</th></tr></thead><tbody>${lignes}</tbody></table>${reste}` : ""}
+    <a class="lien" href="${recherche}" target="_blank" rel="noopener">Voir les offres sur Cardmarket</a>`;
+}
+
+// ---------- Framing editor ----------
+let coins = [];
+$("btn-cadrage").onclick = () => {
+  const img = $("img-cadrage");
+  img.onload = () => {
+    const w = img.naturalWidth, h = img.naturalHeight;
+    $("svg-cadrage").setAttribute("viewBox", `0 0 ${w} ${h}`);
+    // Detected corners, else a centred card-shaped frame.
+    const ch = h * 0.6, cw = (ch * 63) / 88;
+    coins = scan.coins ? scan.coins.map((p) => [...p]) : [[(w - cw) / 2, (h - ch) / 2], [(w + cw) / 2, (h - ch) / 2], [(w + cw) / 2, (h + ch) / 2], [(w - cw) / 2, (h + ch) / 2]];
+    $("poignees").innerHTML = coins.map(() => `<circle r="${w * 0.025}" fill="none" stroke="#fff" stroke-width="3" vector-effect="non-scaling-stroke"/>`).join("");
+    dessinerCadrage();
+  };
+  img.src = URL.createObjectURL(dernierEnvoi);
+  $("cadrage").hidden = false;
+};
+function dessinerCadrage() {
+  $("poly-cadrage").setAttribute("points", coins.map((p) => p.join(",")).join(" "));
+  [...$("poignees").children].forEach((c, i) => { c.setAttribute("cx", coins[i][0]); c.setAttribute("cy", coins[i][1]); });
+}
+let saisi = -1;
+const pointImage = (e) => {
+  const img = $("img-cadrage"), r = img.getBoundingClientRect();
+  const x = ((e.clientX - r.left) / r.width) * img.naturalWidth, y = ((e.clientY - r.top) / r.height) * img.naturalHeight;
+  return [Math.min(Math.max(x, 0), img.naturalWidth), Math.min(Math.max(y, 0), img.naturalHeight)];
+};
+$("scene").onpointerdown = (e) => {
+  const [x, y] = pointImage(e);
+  saisi = coins.reduce((m, p, i) => (Math.hypot(p[0] - x, p[1] - y) < Math.hypot(coins[m][0] - x, coins[m][1] - y) ? i : m), 0);
+  $("scene").setPointerCapture(e.pointerId);
+  coins[saisi] = [x, y]; dessinerCadrage();
+};
+$("scene").onpointermove = (e) => { if (saisi >= 0) { coins[saisi] = pointImage(e); dessinerCadrage(); } };
+$("scene").onpointerup = $("scene").onpointercancel = () => { saisi = -1; };
+$("btn-cadrage-annuler").onclick = () => { $("cadrage").hidden = true; };
+$("btn-cadrage-ok").onclick = () => {
+  $("cadrage").hidden = true;
+  // Back to the order the server expects (top-left, top-right, bottom-right, bottom-left), whatever was dragged where.
+  const cx = coins.reduce((s, p) => s + p[0], 0) / 4, cy = coins.reduce((s, p) => s + p[1], 0) / 4;
+  const tries = [...coins].sort((a, b) => Math.atan2(a[1] - cy, a[0] - cx) - Math.atan2(b[1] - cy, b[0] - cx));
+  const hg = tries.reduce((m, p, i) => (p[0] + p[1] < tries[m][0] + tries[m][1] ? i : m), 0);
+  scanner(dernierFichier, [...tries.slice(hg), ...tries.slice(0, hg)]);
+};
+
+async function choisir(i) {
+  if (i === 0) return afficher(0, scan.cardmarket, scan.note);
+  const c = scan.candidats[i];
+  afficher(i, [], "");
+  $("prix").innerHTML = `<p class="etiquette">Tendance Cardmarket</p><span class="barre-gris" style="height:37px;width:120px;margin-top:4px"></span>`;
+  try {
+    const r = await (await fetch(`/api/prix?jeu=${c.jeu}&id=${encodeURIComponent(c.id)}&langue=${scan.langue ?? ""}`)).json();
+    afficherPrix(c, r.produits ?? [], r.note);
+  } catch {
+    $("prix").innerHTML = `<p class="etiquette">Tendance Cardmarket</p><p>Prix indisponibles pour le moment.</p>`;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+# Secrets
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Dependencies
+node_modules/
+
+# Downloaded or computed data, rebuilt by `npm run indexer` (see phase0/README.md)
+phase0/references/
+phase0/references.zip
+phase0/index/
+phase0/index-ancien/
+phase0/cache/
+
+# Photos and results of local runs (real scans stay on the PC)
+phase0/scans/
+phase0/photos/
+phase0/photos-exemple/
+phase0/resultats/
+phase0/verite.csv
+phase0/banc/photos/
+phase0/banc/resultats/
+
+# Agent experiments: keep code and reports, drop caches, temp files and generated sets
+phase0/experiences/**/cache/
+phase0/experiences/**/tmp/
+phase0/experiences/**/index/
+phase0/experiences/**/photos/
+phase0/experiences/**/*.bin
+phase0/experiences/**/*.zip
+phase0/experiences/**/*.onnx
+
+# Tooling
+phase0/.taste-skill/
+
+# OS and editors
+.DS_Store
+Thumbs.db
+*.log
+phase0/experiences/**/.cache/
+phase0/experiences/**/resultats/
+phase0/experiences/**/*.jpg
+phase0/experiences/**/*.jpeg
+phase0/experiences/**/*.png
+phase0/experiences/**/*.webp
+phase0/experiences/**/*.avif
+phase0/experiences/texte/modeles/
+phase0/experiences/texte/donnees/
+phase0/experiences/correspondance/index-sous/

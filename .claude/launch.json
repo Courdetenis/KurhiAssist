@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "scanner",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "phase0", "run", "serveur"],
+      "port": 3000
+    }
+  ]
+}
